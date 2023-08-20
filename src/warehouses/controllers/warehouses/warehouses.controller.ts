@@ -1,8 +1,9 @@
 import { Controller, Get, Post, Put,  Delete, Param, Body, Patch} from '@nestjs/common';
 import { CreateWarehouseDto } from 'src/warehouses/dtos/createWarehouse.dto'; 
 import { UpdateWarehouseDto } from 'src/warehouses/dtos/updateWarehouse.dto';
-import { CreateProductDto } from 'src/warehouses/dtos/CreateProductDto';
-import { CreateInventoryDto } from 'src/warehouses/dtos/CreateInventoryDto';
+import { CreateProductDto } from 'src/warehouses/dtos/createProductDto';
+import { CreateInventoryDto } from 'src/warehouses/dtos/createInventoryDto';
+import { relocateProductDto } from 'src/warehouses/dtos/relocateProductDto';
 import { WarehousesService } from 'src/warehouses/service/warehouses/warehouses.service';
 
 @Controller('warehouses')
@@ -17,6 +18,11 @@ export class WarehousesController {
     @Post('products')
     createProduct(@Body() productDto: CreateProductDto){
         return this.warehouseService.createProduct(productDto);
+    }
+
+    @Put('relocate/product')
+    relocateProduct(@Body() relocateProductDto: relocateProductDto){
+        return this.warehouseService.relocateProduct(relocateProductDto);
     }
 
     @Post('inventory')
@@ -51,8 +57,6 @@ export class WarehousesController {
     @Get(':id')
     async getStore(@Param('id') idStore: number) {          
         return this.warehouseService.SearchStore(idStore);
-    }
-
-    
+    }    
 
 }

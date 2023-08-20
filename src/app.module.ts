@@ -7,6 +7,7 @@ import { WarehousesModule } from './warehouses/warehouse.module';
 import { User } from './typeorm/entities/User';
 import { Product } from './typeorm/entities/Product';
 import { Inventory } from './typeorm/entities/Inventory';
+import { Record } from './typeorm/entities/Record';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { Inventory } from './typeorm/entities/Inventory';
       username: 'root',
       password: '',
       database: 'inventor',
-      entities: [Warehouse, User, Product, Inventory],
+      entities: [Warehouse, User, Product, Inventory, Record],
       synchronize: true,
     }),
     WarehousesModule,

@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn,  } from "typeorm";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn  } from "typeorm";
 import { Warehouse } from "./Warehouse";
 
 @Entity({ name: 'users' })
@@ -25,7 +25,7 @@ export class User{
     @Column()
     created_at: Date;
 
-    @Column()
+    @UpdateDateColumn()
     updated_at: Date;
 
     @Column()

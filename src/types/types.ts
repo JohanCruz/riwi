@@ -19,6 +19,13 @@ export type createProductParams = {
 
 export type createInventorytParams = {
     cantidad: number;
-    id_warehouse: number;
+    id_bodega: number;
     id_product: number;
+}
+
+export type relocateProductParams ={    
+    cantidad: number;
+    id_bodega_recibe: number;
+    id_bodega_envia: number;
+    id_producto: number;
 }

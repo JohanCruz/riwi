@@ -3,5 +3,4 @@ export class CreateProductDto{
     readonly descripcion: string;
     readonly cantidad: number;
     readonly id_warehouse: number;
-
 }

@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, JoinColumn, JoinTable, OneToMany  } from "typeorm";
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, JoinColumn, UpdateDateColumn, OneToMany  } from "typeorm";
 import { User } from "./User";
 import { Inventory } from "./Inventory";
 
@@ -17,7 +17,7 @@ export class Warehouse{
     @Column()
     created_by: number;
 
-    @Column()
+    @UpdateDateColumn()
     updated_by: number;
 
     @Column()

@@ -1,15 +1,16 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectConnection, InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { Warehouse } from 'src/typeorm/entities/Warehouse';
 import { User } from 'src/typeorm/entities/User';
-import { createWarehouseParams, updateWarehouseParams, createProductParams, createInventorytParams } from 'src/types/types';
+import { createWarehouseParams, updateWarehouseParams, 
+    createProductParams, createInventorytParams, relocateProductParams } from 'src/types/types';
 import { Repository,  } from 'typeorm';
 import { Product } from 'src/typeorm/entities/Product';
 import { Inventory } from 'src/typeorm/entities/Inventory';
 import { DataSource } from 'typeorm';
-import { Console } from 'console';
-
-
+import { Record } from 'src/typeorm/entities/Record';
+import { ExeQuery } from 'src/warehouses/helper/queries'
+import { CallException } from 'src/warehouses/helper/exceptions';
 
 
 @Injectable()
@@ -20,8 +21,9 @@ export class WarehousesService {
         @InjectRepository(Warehouse) private warehouseRepository: Repository<Warehouse>,
         @InjectRepository(User) private userRepository: Repository<User>,
         @InjectRepository(Product) private productRepository: Repository<Product>,
-        @InjectRepository(Inventory) private inventoryRepository: Repository<Inventory>
-    ){}
+        @InjectRepository(Inventory) private inventoryRepository: Repository<Inventory>,
+        @InjectRepository(Record) private recordRepository: Repository<Record> 
+    ){}    
 
     searchAll() {
         return this.warehouseRepository.find()
@@ -70,8 +72,7 @@ export class WarehousesService {
             ...warehouseDetails,
             created_at: new Date(),
             
-        })
-        //newWarehouse.user = user;       
+        })      
         return await  this.warehouseRepository.save(newWarehouse)       
     }
 
@@ -104,80 +105,107 @@ export class WarehousesService {
         let warehouse;
         let id_warehouse_default = 1;
         let newProduct;
-        let id = productDetails["id_warehouse"]
-        
+        let id = productDetails["id_warehouse"];  
 
         if('id_warehouse' in productDetails){
-            warehouse = await this.warehouseRepository.findOneBy({ id } )
-            if(!warehouse) warehouse = await this.warehouseRepository.findOneBy({ "id":id_warehouse_default } )            
+            warehouse = await this.warehouseRepository.findOneBy({ id });
+            if(!warehouse) warehouse = await this.warehouseRepository.findOneBy({ "id":id_warehouse_default })     
         } else{
-            id = id_warehouse_default
-            warehouse = await this.warehouseRepository.findOneBy({id}) 
+            id = id_warehouse_default;
+            warehouse = await this.warehouseRepository.findOneBy({ id });
         }
-        
-        
             
         newProduct = this.productRepository.create({...productDetails, created_at: new Date(),})
         const savedProduct =await  this.productRepository.save(newProduct);
         const { cantidad, } = productDetails;
         
         if(savedProduct){
-            const inventory = {cantidad, warehouse, product:savedProduct};
-            console.log("if saved Product",inventory)
+            const inventory = {cantidad, warehouse, product:savedProduct};            
             const createdInventory = await this.inventoryRepository.create([inventory]);  
             const savedInventory = await this.inventoryRepository.save(createdInventory);         
         }
-
-        return savedProduct         
-        
+        return savedProduct
     }
 
     async createInventory(inventoryDetails: createInventorytParams){
         
-        const { id_warehouse, id_product, cantidad} = inventoryDetails;
+        const { id_bodega, id_product, cantidad} = inventoryDetails;
         let id = id_product, inventory;
         const product = await this.productRepository.findOneBy({id});
-        id = id_warehouse;
+        id = id_bodega;
         const warehouse = await this.warehouseRepository.findOneBy({id});
-
-        console.log('id_product', id_product, 'id_warehouse', id_warehouse)
 
         if(product && warehouse && cantidad && typeof cantidad === typeof 1 ){
             inventory = await this.inventoryRepository.manager.query
             ( `SELECT inventories.id, cantidad
             FROM inventories
-            WHERE id_product = ${id_product} AND id_warehouse = ${id_warehouse};            
+            WHERE id_product = ${id_product} AND id_warehouse = ${id_bodega};            
             `)            
             
             let newinventory;
             if(inventory.length == 1){
                 const quantity = cantidad + inventory[0]['cantidad'];
                 id = inventory[0]['id'];
-                console.log(inventory);
-
-                console.log("UPDATE");
                 newinventory = await this.inventoryRepository.manager.query
                 (`UPDATE inventories
                 SET cantidad = ${quantity} 
                 WHERE id = ${id} `)
             } else {
-                console.log("INSERT INTO");
                 newinventory = await this.inventoryRepository.manager.query
                 (`INSERT INTO inventories
-                (cantidad, id_warehouse, id_product) VALUES(${cantidad},${id_warehouse},${id_product})
+                (cantidad, id_warehouse, id_product) VALUES(${cantidad},${id_bodega},${id_product})
                 `)
             }
-
-            console.log("new inventory", newinventory);
-            return newinventory;           
-            
+            return newinventory;             
         }
-
         throw new HttpException(
             "May be something was wrong !!",
             HttpStatus.BAD_REQUEST,
-        );
-        
+        );  
+    }
 
+
+    async relocateProduct(relocateProduct: relocateProductParams) {
+        const { id_bodega_envia, id_bodega_recibe, cantidad, id_producto } = relocateProduct; 
+        const exQuery = new ExeQuery()
+        const callException = new CallException();       
+        
+        if(typeof id_bodega_envia == typeof 1 && typeof id_bodega_recibe == typeof 1 &&
+            typeof id_bodega_recibe == typeof 1  && typeof cantidad == typeof 1 && id_bodega_envia !== id_bodega_recibe){
+
+            const inventory = await exQuery.getInventory(id_bodega_envia, id_producto, 
+                this.inventoryRepository)                        
+
+            const warehouseReceives = await this.warehouseRepository.findOneBy({id:id_bodega_recibe});
+
+            if(inventory.length >=1 && warehouseReceives && cantidad > 0){
+
+                if(inventory[0]['cantidad'] >= cantidad){
+
+                    await exQuery.updateInventoryMinus(inventory, cantidad, this.inventoryRepository.manager)                                        
+                    const inventoryToUpdate = await exQuery.getInventory(id_bodega_recibe, id_producto, 
+                        this.inventoryRepository)
+                    
+                    if(inventoryToUpdate.length >=1){
+
+                        const inventory = await exQuery.updateInventorySum(inventoryToUpdate, cantidad, this.inventoryRepository);                       
+                        
+                        await exQuery.setRecord(cantidad, id_producto, id_bodega_envia, id_bodega_recibe, 
+                            inventoryToUpdate[0]['id'], this.recordRepository);
+                        return inventory;
+                    } else {
+                        const inventory = await exQuery.setInventory(cantidad, id_producto, id_bodega_recibe, 
+                            this.inventoryRepository)
+                        
+                        await exQuery.setRecord(cantidad, id_producto, id_bodega_envia, id_bodega_recibe, 
+                            inventory["insertId"], this.recordRepository);
+                        return inventory
+                    }
+
+                } else callException.message("Insufficient amount stored !!");                    
+                
+            }           
+        }
+        callException.message("May be something was wrong !!");                
     }
 }
