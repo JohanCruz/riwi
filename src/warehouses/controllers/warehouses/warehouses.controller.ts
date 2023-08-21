@@ -11,7 +11,7 @@ import { CreateSeedersDto } from 'src/warehouses/dtos/createSeedersDto';
 @Controller('warehouses')
 export class WarehousesController {
 
-    constructor(private warehouseService: WarehousesService ){}
+    constructor(private warehouseService: WarehousesService){}
     @Get()
     getAllStores() {
         return this.warehouseService.searchAll();

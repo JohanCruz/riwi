@@ -12,6 +12,7 @@ import { Record } from 'src/typeorm/entities/Record';
 import { ExeQuery } from 'src/warehouses/helper/queries'
 import { CallException } from 'src/warehouses/helper/exceptions';
 import { faker } from '@faker-js/faker';
+import { validations } from '../../helper/seeders.validations';
 
 @Injectable()
 export class WarehousesService {
@@ -208,98 +209,86 @@ export class WarehousesService {
         }
         callException.message("May be something was wrong !!");                
     }
-
-
+    
     async createSeeders(data){
+        
+        const callException = new CallException(); 
+        validations(data, callException);
+        
         const users = []
         const warehouses = []
         const products = []
         const inventories = []
 
-        for (let index = 0; index < data.usuarios; index++) {
-            const user = new User;
-            user.nombre = `${faker.person.firstName} ${faker.person.lastName()}`
-            user.foto = "fake"
-            user.estado = [true, false][Math.floor(Math.random() * 2)]
-            users.push(user) 
-        }
-        await this.userRepository.create(users)
-        await this.userRepository.save(users)
-        /* si no se guardan en la line anterior no se garantiza que se guarden todos los usuarios
-          en lineas posteriores
-        */
-
-        for (let index = 0; index < data.bodegas; index++) {
-            const warehouse = new Warehouse;
-            warehouse.ubication = `F ${faker.location.buildingNumber()} ${faker.company.name()}`
-            warehouse.description = `FAKE ${faker.lorem.sentences()}`
-            warehouse.user = [...users][Math.floor(Math.random() * data.usuarios)]
-            warehouses.push(warehouse) 
-        }
-        await this.warehouseRepository.create(warehouses)
-        await this.warehouseRepository.save(warehouses)
-
-        for (let index = 0; index < data.productos; index++) {
-            const product = new Product;
-            product.nombre = `F ${faker.commerce.productName()}`
-            product.descripcion= `FAKE ${faker.lorem.sentences()}`
-            product.created_at= new Date();
-            products.push(product) 
-        }
-        await this.productRepository.create(products)
-        await this.productRepository.save(products)
-
-        const  combinationSet = new Set; 
-
-        for (let index = 0; index < data.inventarios; index++) {
-            const inventory = new Inventory;
-            inventory.cantidad   = Math.floor(Math.random() * 500 );
-            inventory.warehouse = [...warehouses][Math.floor(Math.random()*(data.bodegas))];
-            inventory.created_at= new Date();
-            inventory.product = [...products][Math.floor(Math.random()*(data.productos))]; 
-            
-            // No adicionar pares repetidos
-            if (!combinationSet.has(`${inventory.product.id}-${inventory.warehouse.id}`)){
-                inventories.push(inventory) 
-                combinationSet.add(`${inventory.product.id}-${inventory.warehouse.id}`);
+        try {
+            for (let index = 0; index < data.usuarios; index++) {
+                const user = new User;
+                user.nombre = `${faker.person.firstName} ${faker.person.lastName()}`
+                user.foto = "fake"
+                user.estado = [true, false][Math.floor(Math.random() * 2)]
+                users.push(user) 
             }
-            
-        }
-        await this.inventoryRepository.create(inventories)
-        await this.inventoryRepository.save(inventories)
-
-
-        return {
-            datos_creados:{
-            cantidad_usuarios: users.length,
-            cantidad_bodegas_warehouses: warehouses.length,
-            cantidad_productos: products.length,
-            cantidad_inventarios: inventories.length
-            }, users, warehouses, products, inventories};
+            await this.userRepository.create(users)
+            await this.userRepository.save(users)
+            /* si no se guardan en la line anterior no se garantiza que se guarden todos los usuarios
+              en lineas posteriores
+            */
+    
+            for (let index = 0; index < data.bodegas; index++) {
+                const warehouse = new Warehouse;
+                warehouse.ubication = `F ${faker.location.buildingNumber()} ${faker.company.name()}`
+                warehouse.description = `FAKE ${faker.lorem.sentences()}`
+                warehouse.user = [...users][Math.floor(Math.random() * data.usuarios)]
+                warehouses.push(warehouse) 
+            }
+            await this.warehouseRepository.create(warehouses)
+            await this.warehouseRepository.save(warehouses)
+    
+            for (let index = 0; index < data.productos; index++) {
+                const product = new Product;
+                product.nombre = `F ${faker.commerce.productName()}`
+                product.descripcion= `FAKE ${faker.lorem.sentences()}`
+                product.created_at= new Date();
+                products.push(product) 
+            }
+            await this.productRepository.create(products)
+            await this.productRepository.save(products)
+    
+            const  combinationSet = new Set; 
+    
+            for (let index = 0; index < data.inventarios; index++) {
+                const inventory = new Inventory;
+                inventory.cantidad   = Math.floor(Math.random() * 500 );
+                inventory.warehouse = [...warehouses][Math.floor(Math.random()*(data.bodegas))];
+                inventory.created_at= new Date();
+                inventory.product = [...products][Math.floor(Math.random()*(data.productos))]; 
+                
+                // No adicionar pares repetidos
+                if (!combinationSet.has(`${inventory.product.id}-${inventory.warehouse.id}`)){
+                    inventories.push(inventory) 
+                    combinationSet.add(`${inventory.product.id}-${inventory.warehouse.id}`);
+                }
+                
+            }
+            await this.inventoryRepository.create(inventories)
+            await this.inventoryRepository.save(inventories)
+    
+    
+            return {
+                datos_creados:{
+                cantidad_usuarios: users.length,
+                cantidad_bodegas_warehouses: warehouses.length,
+                cantidad_productos: products.length,
+                cantidad_inventarios: inventories.length
+                }, users, warehouses, products, inventories};
+        } catch (error) {
+            return callException.message();
+        }        
     }
 
     async deleteSeeders(){
-
-        // await this.inventoryRepository.manager.query
-        // (`DELETE FROM inventories
-        // WHERE inventories.id  NOT IN (SELECT records.id_inventario FROM records)
-        // `);
-       
-        
-        await this.warehouseRepository.manager.query
-        (`DELETE FROM warehouses WHERE description LIKE "FAKE%";`);
-
-        await this.userRepository.manager.query
-        (`DELETE FROM users
-        WHERE foto = 'fake'
-        `);
-
-        await this.productRepository.manager.query
-        (`DELETE FROM products
-        WHERE descripcion LIKE "FAKE%"
-        `);
-
-        
+        const exQuery = new ExeQuery();
+        exQuery.deleteSeeders(this.inventoryRepository);       
 
     }
 }

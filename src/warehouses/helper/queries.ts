@@ -72,4 +72,32 @@ export class ExeQuery {
         
     }
 
+    async deleteSeeders(inventoryRepository){
+        try {
+            await inventoryRepository.manager.query
+        (`DELETE FROM inventories
+        WHERE inventories.id  NOT IN (SELECT records.id_inventario FROM records)
+        `);
+       
+        
+        await inventoryRepository.manager.query
+        (`DELETE FROM warehouses WHERE description LIKE "FAKE%";`);
+
+        await inventoryRepository.manager.query
+        (`DELETE FROM users
+        WHERE foto = 'fake'
+        `);
+
+        await inventoryRepository.manager.query
+        (`DELETE FROM products
+        WHERE descripcion LIKE "FAKE%"
+        `); 
+            
+        } catch (error) {
+            this.callException();
+        }
+    }
+
+    
+
 }

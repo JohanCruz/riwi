@@ -4,15 +4,11 @@ export class CallException {
 
     constructor(){}
 
-
-    message(message){
+    message(message= "May be something was wrong !!"){
         throw new HttpException(
-            "May be something was wrong !!",
+            message,
             HttpStatus.BAD_REQUEST,
         );
-    }
-
-    
-        
+    }  
 
 }
