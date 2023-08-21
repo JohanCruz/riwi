@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Warehouse } from './typeorm/entities/Warehouse';
 import { WarehousesModule } from './warehouses/warehouse.module';
@@ -17,7 +15,7 @@ import { Record } from './typeorm/entities/Record';
       port: 3306,
       username: 'root',
       password: '',
-      database: 'inventor',
+      database: 'inventory',
       entities: [Warehouse, User, Product, Inventory, Record],
       synchronize: true,
     }),
