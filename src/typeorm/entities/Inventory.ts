@@ -29,7 +29,9 @@ export class Inventory{
 
     
 
-    @ManyToOne(() => Product, (product) => product.inventory,) 
+    @ManyToOne(() => Product, (product) => product.inventory,{ 
+        onDelete: 'CASCADE' 
+      }) 
     @JoinColumn({
         name: "id_product",
         referencedColumnName: "id",
@@ -37,7 +39,9 @@ export class Inventory{
     })     
     product: Product;
 
-    @ManyToOne(() => Warehouse, (warehouse) => warehouse.inventory)
+    @ManyToOne(() => Warehouse, (warehouse) => warehouse.inventory, { 
+        onDelete: 'CASCADE' 
+      })
     @JoinColumn({
         name: "id_warehouse",
         referencedColumnName: "id",

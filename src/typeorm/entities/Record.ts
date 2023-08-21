@@ -32,12 +32,11 @@ export class Record{
     @ManyToOne(type => Inventory, { nullable: false })
     @JoinColumn({
         name: "id_inventario",
-        referencedColumnName: "id",
-        foreignKeyConstraintName: "fk_inventario_record_id"
+        referencedColumnName: "id"
     })
     inventory: Inventory;
 
-    @ManyToOne(type => Product, { nullable: false })
+    @ManyToOne(type => Product, { nullable: false, onDelete: 'CASCADE'  })
     @JoinColumn({
         name: "id_product",
         referencedColumnName: "id",

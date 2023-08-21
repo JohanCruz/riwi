@@ -30,7 +30,7 @@ export class Warehouse{
     deleted_at: Date;
 
     @ManyToOne( () => User, (user)=> user.warehouses,
-    {eager: true, cascade: true})
+    {eager: true, cascade: true, onDelete: 'CASCADE'})
     @JoinColumn({
         name: "id_responsable",
         referencedColumnName: "id",

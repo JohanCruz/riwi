@@ -5,6 +5,8 @@ import { CreateProductDto } from 'src/warehouses/dtos/createProductDto';
 import { CreateInventoryDto } from 'src/warehouses/dtos/createInventoryDto';
 import { relocateProductDto } from 'src/warehouses/dtos/relocateProductDto';
 import { WarehousesService } from 'src/warehouses/service/warehouses/warehouses.service';
+import { CreateSeedersDto } from 'src/warehouses/dtos/createSeedersDto';
+
 
 @Controller('warehouses')
 export class WarehousesController {
@@ -13,6 +15,16 @@ export class WarehousesController {
     @Get()
     getAllStores() {
         return this.warehouseService.searchAll();
+    }
+
+    @Post('seeders')    
+    createSeeders(@Body() createSeedersDto: CreateSeedersDto ){ 
+        return this.warehouseService.createSeeders(createSeedersDto);
+    }
+
+    @Delete('seeders')
+    deleteSeeders(){ 
+        return this.warehouseService.deleteSeeders();
     }
 
     @Post('products')
@@ -57,6 +69,8 @@ export class WarehousesController {
     @Get(':id')
     async getStore(@Param('id') idStore: number) {          
         return this.warehouseService.SearchStore(idStore);
-    }    
+    }  
+    
+    
 
 }
