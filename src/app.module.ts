@@ -6,16 +6,20 @@ import { User } from './typeorm/entities/User';
 import { Product } from './typeorm/entities/Product';
 import { Inventory } from './typeorm/entities/Inventory';
 import { Record } from './typeorm/entities/Record';
+import { ConfigModule } from '@nestjs/config';
+require('dotenv').config()
+
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
+    ConfigModule.forRoot(),    
+    TypeOrmModule.forRoot({      
       type: 'mysql',
-      host: 'localhost',
-      port: 3306,
-      username: 'root',
-      password: '',
-      database: 'inventory',
+      host: process.env.DB_HOST ? process.env.DB_HOST : 'localhost',
+      port: process.env.DB_PORT? parseInt(process.env.DB_PORT) : 3306,
+      username: process.env.DB_USER? process.env.DB_USER: 'root',
+      password: process.env.DB_PASSWORD? process.env.DB_PASSWORD : '',
+      database: process.env.DB_NAME ? process.env.DB_NAME :'inventory',
       entities: [Warehouse, User, Product, Inventory, Record],
       synchronize: true,
     }),
